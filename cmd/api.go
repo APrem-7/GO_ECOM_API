@@ -38,6 +38,11 @@ func (app *application) mount() http.Handler {
 	return r
 }
 
+// run
+func (app *application) run(h http.Handler) error {
+	return http.ListenAndServe(":8080", h)
+}
+
 type config struct {
 	addr string //address to listen on
 	db   dbConfig
