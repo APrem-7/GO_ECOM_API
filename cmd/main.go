@@ -4,6 +4,7 @@ type application struct{
 //methods that are going to run and moiunt your api and you can add graceful shutdown also
 
 config config
+//later on add logger and db drvier
 
 }
 
