@@ -1,6 +1,7 @@
 package products
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
@@ -19,5 +20,8 @@ func NewHandler(service Service) *handler {
 func (h *handler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	//Call the service to List all the products available
 	//return JSON in an http Resposne
+	products := []string{"product1", "product2", "product3"}
+	json.NewEncoder(w).Encode(products)
+	
 
 }
