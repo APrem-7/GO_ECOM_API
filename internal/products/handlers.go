@@ -12,3 +12,9 @@ func NewHandler ( service Service) *handler{
 	}
 
 }
+
+func (h * handler) ListProducts(w http.ResponseWriter, r *http.Request){
+	//Call the service to List all the products available
+	//return JSON in an http Resposne	
+	
+}
