@@ -1,20 +1,23 @@
 package products
 
-type handler struct{
-	servcie Service,
+import (
+	"net/http"
+)
+
+type handler struct {
+	service Service
 }
 
-
-//create a handler in using the Servicce
-func NewHandler ( service Service) *handler{
+// create a handler in using the Servicce
+func NewHandler(service Service) *handler {
 	return &handler{
-		servcie: service,
+		service: service,
 	}
 
 }
 
-func (h * handler) ListProducts(w http.ResponseWriter, r *http.Request){
+func (h *handler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	//Call the service to List all the products available
-	//return JSON in an http Resposne	
-	
+	//return JSON in an http Resposne
+
 }
