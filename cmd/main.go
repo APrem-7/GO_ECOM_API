@@ -1,14 +1,16 @@
 package main
 
 import (
+	"context"
 	"log"
 	"log/slog"
 	"os"
 
-g
+	"github.com/jackc/pgx/v5"
 )
 
 func main() {
+	ctx := context.Background()
 	cfg := config{
 		addr: ":8080",
 		db: dbConfig{
@@ -17,7 +19,8 @@ func main() {
 	//Database
 	conn, err := pgx.Connect(ctx, "user=pqgotest dbname=pqgotest sslmode=verify-full")
 	if err != nil {
-		return err
+		panic(err)
+
 	}
 	defer conn.Close(ctx)
 
