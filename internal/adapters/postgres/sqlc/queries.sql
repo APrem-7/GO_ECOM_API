@@ -1,5 +1,5 @@
---name:ListProducts :many
+-- name: ListProducts :many
 SELECT * FROM products;
 
---name:GetProductByID :one
+-- name: GetProductByID :one
 SELECT * FROM products WHERE id=$1;
