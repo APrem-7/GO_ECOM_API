@@ -16,6 +16,10 @@ func main() {
 		db: dbConfig{
 			dsn: "host=localhost user=postgres password=postgres dbname=ecom sslmode=disabled"},
 	}
+	//Logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	//Database
 	conn, err := pgx.Connect(ctx, "user=pqgotest dbname=pqgotest sslmode=verify-full")
 	if err != nil {
@@ -24,13 +28,12 @@ func main() {
 	}
 	defer conn.Close(ctx)
 
+	logger.Info("database connected", "dsn", cfg.db.dsn)
+
 	api := application{
 		config: cfg,
 	}
-	//Logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	slog.SetDefault(logger)
 	h := api.mount()
 	api.run(h)
 	// api.run(api.mount())
