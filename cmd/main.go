@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/APrem-7/GO_ECOM_API/internal/env"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -14,14 +15,14 @@ func main() {
 	cfg := config{
 		addr: ":8080",
 		db: dbConfig{
-			dsn: "host=localhost user=postgres password=postgres dbname=ecom sslmode=disabled"},
+			dsn: env.GetString("GOOSE_DBSTRING", "host=localhost port=5432 user=postgres password=postgres dbname=ecom sslmode=disable")},
 	}
 	//Logger
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
 	//Database
-	conn, err := pgx.Connect(ctx, "user=pqgotest dbname=pqgotest sslmode=verify-full")
+	conn, err := pgx.Connect(ctx, cfg.db.dsn)
 	if err != nil {
 		panic(err)
 
