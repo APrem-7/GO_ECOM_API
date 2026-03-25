@@ -1,6 +1,7 @@
 package products
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/APrem-7/GO_ECOM_API/internal/json"
@@ -21,8 +22,12 @@ func NewHandler(service Service) *handler {
 func (h *handler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	//Call the service to List all the products available
 	//return JSON in an http Resposne
-	products := []string{"product1", "product2", "product3"}
-
+	products, err := h.service.ListProduct(r.Context())
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	json.WriteJSON(w, http.StatusOK, products)
 
 }
