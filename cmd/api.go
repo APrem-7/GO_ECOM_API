@@ -8,14 +8,15 @@ import (
 	"github.com/APrem-7/GO_ECOM_API/internal/products"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5"
 )
 
 type application struct {
 	//methods that are going to run and moiunt your api and you can add graceful shutdown also
 
 	config config
-	//later on add logger and db driver
-
+	//later on add logger
+	db *pgx.Conn
 }
 
 // mount mounts the routes to the router
