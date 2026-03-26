@@ -9,6 +9,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5"
+
+	repo "github.com/APrem-7/GO_ECOM_API/internal/adapters/postgres/sqlc"
 )
 
 type application struct {
@@ -37,7 +39,8 @@ func (app *application) mount() http.Handler {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("all good\n"))
 	})
-	productHandler := products.NewHandler(nil)
+	productsService := products.NewService(repo.New(app.db))
+	productHandler := products.NewHandler(productsService)
 	r.Get("/products", productHandler.ListProducts)
 
 	return r
