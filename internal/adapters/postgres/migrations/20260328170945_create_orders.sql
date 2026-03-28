@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     quantity INTEGER NOT NULL DEFAULT 1,
     price_in_centers INTEGER NOT NULL CHECK (price_in_centers>=0),
     product_id BIGINT NOT NULL,
-    CONSTRAINT fk_order FOREIGN_KEY (order_id) REFERENCES orders(id)
+    CONSTRAINT fk_order FOREIGN KEY (order_id) REFERENCES orders(id)
 
 
 
