@@ -59,3 +59,34 @@ func (q *Queries) ListProducts(ctx context.Context) ([]Product, error) {
 	}
 	return items, nil
 }
+
+const postOrder = `-- name: PostOrder :one
+INSERT INTO order_items(order_id, quantity,price_in_centers,product_id) VALUES($1, $2, $3, $4) RETURNING id, order_id, created_at, updated_at, quantity, price_in_centers, product_id
+`
+
+type PostOrderParams struct {
+	OrderID        int64
+	Quantity       int32
+	PriceInCenters int32
+	ProductID      int64
+}
+
+func (q *Queries) PostOrder(ctx context.Context, arg PostOrderParams) (OrderItem, error) {
+	row := q.db.QueryRow(ctx, postOrder,
+		arg.OrderID,
+		arg.Quantity,
+		arg.PriceInCenters,
+		arg.ProductID,
+	)
+	var i OrderItem
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Quantity,
+		&i.PriceInCenters,
+		&i.ProductID,
+	)
+	return i, err
+}

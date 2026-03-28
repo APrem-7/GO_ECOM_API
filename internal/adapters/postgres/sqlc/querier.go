@@ -11,6 +11,7 @@ import (
 type Querier interface {
 	GetProductByID(ctx context.Context, id int64) (Product, error)
 	ListProducts(ctx context.Context) ([]Product, error)
+	PostOrder(ctx context.Context, arg PostOrderParams) (OrderItem, error)
 }
 
 var _ Querier = (*Queries)(nil)
