@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/APrem-7/GO_ECOM_API/internal/orders"
 	"github.com/APrem-7/GO_ECOM_API/internal/products"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -42,6 +43,11 @@ func (app *application) mount() http.Handler {
 	productsService := products.NewService(repo.New(app.db))
 	productHandler := products.NewHandler(productsService)
 	r.Get("/products", productHandler.ListProducts)
+
+	//handler for the orders
+	ordersService := orders.NewService(repo.New(app.db))
+	ordersHandler := orders.NewHandler(ordersService)
+	r.Post("/orders", ordersHandler.CreateOrder)
 
 	return r
 }
