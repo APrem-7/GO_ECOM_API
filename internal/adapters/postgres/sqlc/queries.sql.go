@@ -60,19 +60,40 @@ func (q *Queries) ListProducts(ctx context.Context) ([]Product, error) {
 	return items, nil
 }
 
-const postOrder = `-- name: PostOrder :one
+const createOrder = `-- name: createOrder :one
+INSERT INTO orders(customer_id,order_status) VALUES($1,$2) RETURNING id, customer_id, order_status, created_at
+`
+
+type createOrderParams struct {
+	CustomerID  int64
+	OrderStatus string
+}
+
+func (q *Queries) createOrder(ctx context.Context, arg createOrderParams) (Order, error) {
+	row := q.db.QueryRow(ctx, createOrder, arg.CustomerID, arg.OrderStatus)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.CustomerID,
+		&i.OrderStatus,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createOrderItem = `-- name: createOrderItem :one
 INSERT INTO order_items(order_id, quantity,price_in_centers,product_id) VALUES($1, $2, $3, $4) RETURNING id, order_id, created_at, updated_at, quantity, price_in_centers, product_id
 `
 
-type PostOrderParams struct {
+type createOrderItemParams struct {
 	OrderID        int64
 	Quantity       int32
 	PriceInCenters int32
 	ProductID      int64
 }
 
-func (q *Queries) PostOrder(ctx context.Context, arg PostOrderParams) (OrderItem, error) {
-	row := q.db.QueryRow(ctx, postOrder,
+func (q *Queries) createOrderItem(ctx context.Context, arg createOrderItemParams) (OrderItem, error) {
+	row := q.db.QueryRow(ctx, createOrderItem,
 		arg.OrderID,
 		arg.Quantity,
 		arg.PriceInCenters,
