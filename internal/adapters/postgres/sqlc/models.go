@@ -8,6 +8,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Order struct {
+	ID          int64
+	CustomerID  int64
+	OrderStatus string
+	CreatedAt   pgtype.Timestamptz
+}
+
+type OrderItem struct {
+	ID             int64
+	OrderID        int64
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+	Quantity       int32
+	PriceInCenters int32
+	ProductID      int64
+}
+
 type Product struct {
 	ID             int64
 	Name           string
