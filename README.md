@@ -1,78 +1,162 @@
-# Go E-Commerce API
+# GO_ECOM_API
 
-A fast, robust, and scalable E-Commerce REST API built with Go.
+A REST API for e-commerce, built with Go. No fluff, no framework magic — just clean layers, typed SQL, and a Postgres database that Docker spins up for you in one command.
 
-## 🚀 Tech Stack
+---
 
-- **Language:** [Go](https://go.dev/) (v1.25.5)
-- **Router:** [go-chi](https://github.com/go-chi/chi) - A lightweight, idiomatic, and composable router for building Go HTTP services.
-- **Database:** PostgreSQL
-- **Database Driver:** [pgx/v5](https://github.com/jackc/pgx)
-- **Database Toolkit:** [sqlc](https://sqlc.dev/) - Compiles SQL to type-safe Go code.
+## What it does
 
-## 📂 Project Structure
+Two core things:
 
-- `cmd/`: Application entry points (`api.go`).
-- `internal/`: Private application and library code.
-  - `adapters/postgres/`: Database-specific implementations, migrations, and `sqlc` generated code.
-  - `orders/`: Business logic, domain models, and HTTP handlers for the orders domain.
-  - `products/`: Business logic, domain models, and HTTP handlers for the products domain.
-  - `json/`: Reusable utility functions for JSON encoding/request handling.
+- **Browse products** — `GET /products` returns every product in the store with name, description, price, and stock quantity.
+- **Place orders** — `POST /orders` creates an order for a customer. It validates that every item in the order actually exists, checks that stock is available, and wraps the whole thing in a database transaction so you never end up with a half-created order.
 
-## 🛠 Prerequisites
+There's also a `GET /health` endpoint that just says `"all good"` — because sometimes that's all you need to hear.
 
-Before you start, make sure you have the following installed:
-- Go (1.25.5 or later)
-- Docker and Docker Compose
-- `sqlc` CLI (optional, if you plan to modify SQL queries)
+> Why did the Go developer quit their job?  
+> Because they didn't get a CHAN-ce to do anything interesting. 🥁
 
-## 💻 Getting Started
+---
 
-### 1. Start the Database
+## Stack
 
-The project uses Docker Compose to easily spin up a PostgreSQL instance.
+| Thing | What it is |
+|---|---|
+| [Go 1.25.5](https://go.dev/) | The language |
+| [chi](https://github.com/go-chi/chi) | Lightweight HTTP router — no magic, just middleware and routes |
+| [PostgreSQL 16](https://www.postgresql.org/) | The database |
+| [pgx/v5](https://github.com/jackc/pgx) | Postgres driver — fast and idiomatic |
+| [sqlc](https://sqlc.dev/) | Generates type-safe Go from raw SQL — write SQL, get Go structs |
+| Docker Compose | Spins up the database locally without any setup pain |
+
+---
+
+## Project Layout
+
+```
+cmd/
+  api.go      ← server setup, routes, middleware
+  main.go     ← entry point, env + DB config
+
+internal/
+  products/   ← handler + service for listing products
+  orders/     ← handler + service for creating orders (with tx + stock check)
+  adapters/
+    postgres/
+      sqlc/   ← all DB queries and generated code live here
+  json/       ← tiny helpers for reading/writing JSON
+  env/        ← reads env vars with a fallback default
+```
+
+The architecture is intentionally simple: HTTP handler → service → database. No over-engineering.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Go 1.25+
+- Docker & Docker Compose
+
+### 1. Start the database
 
 ```bash
 docker-compose up -d
 ```
 
-This will start a PostgreSQL database running on `localhost:5432` with:
-- **User:** `postgres`
-- **Password:** `postgres`
+This starts a Postgres 16 container on `localhost:5432` with:
+
+- **User:** `postgres`  
+- **Password:** `postgres`  
 - **Database:** `ecom`
 
-### 2. Configure Environment
+### 2. Set up your environment
 
-Ensure you have a `.env` file in the root directory configured with your database connection details and other necessary environment variables.
+Create a `.env` file in the project root:
 
-Example `.env` (adjust according to your specific setup):
 ```env
-# Example environment variables
 PORT=:8080
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/ecom?sslmode=disable
 ```
 
-### 3. Run Database Migrations
+### 3. Run migrations
 
-*(Make sure your database schema is initialized. You may need a tool like `goose` or `migrate` depending on your setup, or manually execute the SQL files in `internal/adapters/postgres/migrations/`)*
+Apply the SQL schema from `internal/adapters/postgres/migrations/` to your database. You can use a tool like [`goose`](https://github.com/pressly/goose) or just run the migration files directly against the database.
 
-### 4. Run the Application
-
-Start the HTTP server:
+### 4. Start the server
 
 ```bash
 go run cmd/api.go
 ```
 
-## 🗄 Database Workflow (sqlc)
+The server starts on the port defined in your `PORT` env var (default `:8080`).
 
-This project uses `sqlc` to generate type-safe Go code from SQL. 
+---
 
-1. Write your SQL queries in `internal/adapters/postgres/sqlc/queries.sql`.
-2. Define schema changes in `internal/adapters/postgres/migrations/`.
-3. Run `sqlc generate` in the root directory.
-4. The generated Go code will be available in the `internal/adapters/postgres/sqlc/` package (as `repo`).
+## API
 
-## 🤝 Contributing
+### `GET /health`
+Returns `200 OK` with `"all good"`. Use it for health checks or just reassurance.
 
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
+---
+
+### `GET /products`
+Returns a JSON array of all products.
+
+```json
+[
+  {
+    "ID": 1,
+    "Name": "Mechanical Keyboard",
+    "PriceInCenters": 8999,
+    "Description": { "String": "Clicky and satisfying", "Valid": true },
+    "Quantity": 42,
+    "CreatedAt": "...",
+    "UpdatedAt": "..."
+  }
+]
+```
+
+> Note: Prices are stored in **cents** (e.g. `8999` = $89.99).
+
+---
+
+### `POST /orders`
+Creates a new order. Validates stock availability and runs everything in a single transaction.
+
+**Request body:**
+```json
+{
+  "customer_id": 7,
+  "items": [
+    { "product_id": 1, "quantity": 2 }
+  ]
+}
+```
+
+**Responses:**
+- `201 Created` — order created, returns the order object
+- `400 Bad Request` — missing customer ID or items
+- `404 Not Found` — a product ID doesn't exist
+- `507 Insufficient Storage` — not enough stock for one of the items
+- `500 Internal Server Error` — something went wrong on our end
+
+---
+
+## Working with sqlc
+
+SQL queries live in `internal/adapters/postgres/sqlc/queries.sql`. When you add or change a query, regenerate the Go code:
+
+```bash
+sqlc generate
+```
+
+The generated types and functions land in the same `sqlc/` directory. Don't edit the generated files directly — they'll get overwritten.
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome. If something's broken or you've got an idea, open an issue and we can talk through it.
+
