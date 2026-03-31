@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	repo "github.com/APrem-7/GO_ECOM_API/internal/adapters/postgres/sqlc"
+	"github.com/jackc/pgx/v5"
 )
 
 type Service interface {
@@ -13,11 +14,15 @@ type Service interface {
 }
 
 type svc struct {
-	repo repo.Querier
+	repo repo.Queries
+	db   *pgx.Conn
 }
 
-func NewService(q repo.Querier) Service {
-	return &svc{repo: q}
+func NewService(q repo.Querier, db *pgx.Conn) Service {
+	return &svc{
+		repo: q,
+		db:   db,
+	}
 }
 
 func (s *svc) PostOrders(ctx context.Context, tempOrder CreateOrderParams) (repo.Order, error) {
@@ -32,4 +37,12 @@ func (s *svc) PostOrders(ctx context.Context, tempOrder CreateOrderParams) (repo
 	//create an Order
 	//look for the product if exists
 	//create order item
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return repo.Order{}, err
+	}
+
+	defer tx.Rollback(ctx)
+	qtx := s.repo.WithTx(tx)
+
 }
