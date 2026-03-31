@@ -4,8 +4,8 @@ SELECT * FROM products;
 -- name: GetProductByID :one
 SELECT * FROM products WHERE id=$1;
 
--- name: createOrder :one
+-- name: CreateOrder :one
 INSERT INTO orders(customer_id,order_status) VALUES($1,$2) RETURNING *;
 
--- name: createOrderItem :one
+-- name: CreateOrderItem :one
 INSERT INTO order_items(order_id, quantity,price_in_centers,product_id) VALUES($1, $2, $3, $4) RETURNING *;
