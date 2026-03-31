@@ -9,10 +9,10 @@ import (
 )
 
 type Querier interface {
+	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
+	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
 	GetProductByID(ctx context.Context, id int64) (Product, error)
 	ListProducts(ctx context.Context) ([]Product, error)
-	createOrder(ctx context.Context, arg createOrderParams) (Order, error)
-	createOrderItem(ctx context.Context, arg createOrderItemParams) (OrderItem, error)
 }
 
 var _ Querier = (*Queries)(nil)

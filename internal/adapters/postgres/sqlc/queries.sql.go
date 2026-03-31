@@ -9,6 +9,58 @@ import (
 	"context"
 )
 
+const createOrder = `-- name: CreateOrder :one
+INSERT INTO orders(customer_id,order_status) VALUES($1,$2) RETURNING id, customer_id, order_status, created_at
+`
+
+type CreateOrderParams struct {
+	CustomerID  int64
+	OrderStatus string
+}
+
+func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
+	row := q.db.QueryRow(ctx, createOrder, arg.CustomerID, arg.OrderStatus)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.CustomerID,
+		&i.OrderStatus,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createOrderItem = `-- name: CreateOrderItem :one
+INSERT INTO order_items(order_id, quantity,price_in_centers,product_id) VALUES($1, $2, $3, $4) RETURNING id, order_id, created_at, updated_at, quantity, price_in_centers, product_id
+`
+
+type CreateOrderItemParams struct {
+	OrderID        int64
+	Quantity       int32
+	PriceInCenters int32
+	ProductID      int64
+}
+
+func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error) {
+	row := q.db.QueryRow(ctx, createOrderItem,
+		arg.OrderID,
+		arg.Quantity,
+		arg.PriceInCenters,
+		arg.ProductID,
+	)
+	var i OrderItem
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Quantity,
+		&i.PriceInCenters,
+		&i.ProductID,
+	)
+	return i, err
+}
+
 const getProductByID = `-- name: GetProductByID :one
 SELECT id, name, price_in_centers, description, quantity, created_at, updated_at FROM products WHERE id=$1
 `
@@ -58,56 +110,4 @@ func (q *Queries) ListProducts(ctx context.Context) ([]Product, error) {
 		return nil, err
 	}
 	return items, nil
-}
-
-const createOrder = `-- name: createOrder :one
-INSERT INTO orders(customer_id,order_status) VALUES($1,$2) RETURNING id, customer_id, order_status, created_at
-`
-
-type createOrderParams struct {
-	CustomerID  int64
-	OrderStatus string
-}
-
-func (q *Queries) createOrder(ctx context.Context, arg createOrderParams) (Order, error) {
-	row := q.db.QueryRow(ctx, createOrder, arg.CustomerID, arg.OrderStatus)
-	var i Order
-	err := row.Scan(
-		&i.ID,
-		&i.CustomerID,
-		&i.OrderStatus,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const createOrderItem = `-- name: createOrderItem :one
-INSERT INTO order_items(order_id, quantity,price_in_centers,product_id) VALUES($1, $2, $3, $4) RETURNING id, order_id, created_at, updated_at, quantity, price_in_centers, product_id
-`
-
-type createOrderItemParams struct {
-	OrderID        int64
-	Quantity       int32
-	PriceInCenters int32
-	ProductID      int64
-}
-
-func (q *Queries) createOrderItem(ctx context.Context, arg createOrderItemParams) (OrderItem, error) {
-	row := q.db.QueryRow(ctx, createOrderItem,
-		arg.OrderID,
-		arg.Quantity,
-		arg.PriceInCenters,
-		arg.ProductID,
-	)
-	var i OrderItem
-	err := row.Scan(
-		&i.ID,
-		&i.OrderID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Quantity,
-		&i.PriceInCenters,
-		&i.ProductID,
-	)
-	return i, err
 }
