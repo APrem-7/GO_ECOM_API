@@ -9,10 +9,9 @@ import (
 )
 
 type Order struct {
-	ID          int64
-	CustomerID  int64
-	OrderStatus string
-	CreatedAt   pgtype.Timestamptz
+	ID         int64
+	CustomerID int64
+	CreatedAt  pgtype.Timestamptz
 }
 
 type OrderItem struct {

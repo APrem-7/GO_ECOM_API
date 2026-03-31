@@ -10,18 +10,13 @@ import (
 )
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders(customer_id) VALUES($1) RETURNING id, customer_id, order_status, created_at
+INSERT INTO orders(customer_id) VALUES($1) RETURNING id, customer_id, created_at
 `
 
 func (q *Queries) CreateOrder(ctx context.Context, customerID int64) (Order, error) {
 	row := q.db.QueryRow(ctx, createOrder, customerID)
 	var i Order
-	err := row.Scan(
-		&i.ID,
-		&i.CustomerID,
-		&i.OrderStatus,
-		&i.CreatedAt,
-	)
+	err := row.Scan(&i.ID, &i.CustomerID, &i.CreatedAt)
 	return i, err
 }
 
