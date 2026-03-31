@@ -2,10 +2,16 @@ package orders
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	repo "github.com/APrem-7/GO_ECOM_API/internal/adapters/postgres/sqlc"
 	"github.com/jackc/pgx/v5"
+)
+
+var (
+	ErrorProductNotFound   = errors.New("product not found")
+	ErrorProductOutOfStock = errors.New("Product out of stock or quantity not available")
 )
 
 type Service interface {
@@ -50,4 +56,30 @@ func (s *svc) PostOrders(ctx context.Context, tempOrder CreateOrderParams) (repo
 	if err != nil {
 		return repo.Order{}, err
 	}
+
+	//looking for the product if exists
+	for _, item := range tempOrder.Items {
+		product, err := s.repo.GetProductByID(ctx, item.ProductID)
+		if err != nil {
+			return repo.Order{}, ErrorProductNotFound
+		}
+		if product.Quantity < item.Quantity {
+			return repo.Order{}, ErrorProductOutOfStock
+		}
+		//error handling of the product
+
+		//creating the order item
+		_, err = qtx.CreateOrderItem(ctx, repo.CreateOrderItemParams{
+			OrderID:        order.ID,
+			Quantity:       item.Quantity,
+			PriceInCenters: product.PriceInCenters,
+			ProductID:      product.ID,
+		})
+
+		if err != nil {
+			return repo.Order{}, err
+		}
+
+	}
+	return order, nil
 }
