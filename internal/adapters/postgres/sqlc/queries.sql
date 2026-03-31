@@ -5,7 +5,7 @@ SELECT * FROM products;
 SELECT * FROM products WHERE id=$1;
 
 -- name: CreateOrder :one
-INSERT INTO orders(customer_id,order_status) VALUES($1,$2) RETURNING *;
+INSERT INTO orders(customer_id) VALUES($1) RETURNING *;
 
 -- name: CreateOrderItem :one
 INSERT INTO order_items(order_id, quantity,price_in_centers,product_id) VALUES($1, $2, $3, $4) RETURNING *;
