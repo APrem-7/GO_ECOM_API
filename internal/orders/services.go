@@ -45,4 +45,9 @@ func (s *svc) PostOrders(ctx context.Context, tempOrder CreateOrderParams) (repo
 	defer tx.Rollback(ctx)
 	qtx := s.repo.WithTx(tx)
 
+	//create an order
+	order, err := qtx.CreateOrder(ctx, tempOrder.CustomerID)
+	if err != nil {
+		return repo.Order{}, err
+	}
 }
