@@ -45,9 +45,9 @@ func (app *application) mount() http.Handler {
 	r.Get("/products", productHandler.ListProducts)
 
 	//handler for the orders
-	ordersService := orders.NewService(repo.New(app.db))
+	ordersService := orders.NewService(repo.New(app.db), app.db)
 	ordersHandler := orders.NewHandler(ordersService)
-	r.Post("/orders", ordersHandler.CreateOrder)
+	r.Post("/orders", ordersHandler.PostOrder)
 
 	return r
 }
