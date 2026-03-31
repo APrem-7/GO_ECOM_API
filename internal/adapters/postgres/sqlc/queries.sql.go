@@ -10,16 +10,11 @@ import (
 )
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders(customer_id,order_status) VALUES($1,$2) RETURNING id, customer_id, order_status, created_at
+INSERT INTO orders(customer_id) VALUES($1) RETURNING id, customer_id, order_status, created_at
 `
 
-type CreateOrderParams struct {
-	CustomerID  int64
-	OrderStatus string
-}
-
-func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
-	row := q.db.QueryRow(ctx, createOrder, arg.CustomerID, arg.OrderStatus)
+func (q *Queries) CreateOrder(ctx context.Context, customerID int64) (Order, error) {
+	row := q.db.QueryRow(ctx, createOrder, customerID)
 	var i Order
 	err := row.Scan(
 		&i.ID,
