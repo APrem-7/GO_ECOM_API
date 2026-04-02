@@ -50,6 +50,78 @@ internal/
 
 The architecture is intentionally simple: HTTP handler → service → database. No over-engineering.
 
+### Architecture Diagram
+
+```mermaid
+graph TD
+    Client([Client])
+
+    subgraph cmd ["cmd/"]
+        Router["chi Router\napi.go"]
+    end
+
+    subgraph products ["internal/products/"]
+        PH["Handler"]
+        PS["Service"]
+    end
+
+    subgraph orders ["internal/orders/"]
+        OH["Handler"]
+        OS["Service"]
+    end
+
+    subgraph adapters ["internal/adapters/postgres/sqlc/"]
+        DB["Queries\n(sqlc-generated)"]
+    end
+
+    Postgres[(PostgreSQL 16)]
+
+    Client -->|HTTP request| Router
+    Router -->|GET /products| PH
+    Router -->|POST /orders| OH
+    PH --> PS
+    OH --> OS
+    PS --> DB
+    OS --> DB
+    DB --> Postgres
+```
+
+### Order Request Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant H as orders.Handler
+    participant S as orders.Service
+    participant Q as sqlc Queries
+    participant DB as PostgreSQL
+
+    C->>H: POST /orders { customer_id, items }
+    H->>H: Decode & validate request body
+    H->>S: CreateOrder(ctx, params)
+
+    S->>DB: BEGIN transaction
+
+    loop For each order item
+        S->>Q: GetProduct(ctx, product_id)
+        Q-->>S: Product (or 404 Not Found)
+        S->>S: Check stock availability
+    end
+
+    S->>Q: CreateOrder(ctx, ...)
+    Q-->>S: Order record
+
+    loop For each order item
+        S->>Q: CreateOrderItem(ctx, ...)
+        S->>Q: DeductStock(ctx, product_id, qty)
+    end
+
+    S->>DB: COMMIT transaction
+    DB-->>S: OK
+    S-->>H: Order created
+    H-->>C: 201 Created { order }
+```
+
 ---
 
 ## Getting Started
