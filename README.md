@@ -1,4 +1,4 @@
-# GO_ECOM_API
+t rK0o-,p# GO_ECOM_API
 
 A REST API for e-commerce, built with Go. No fluff, no framework magic — just clean layers, typed SQL, and a Postgres database that Docker spins up for you in one command.
 
@@ -9,7 +9,8 @@ A REST API for e-commerce, built with Go. No fluff, no framework magic — just 
 Two core things:
 
 - **Browse products** — `GET /products` returns every product in the store with name, description, price, and stock quantity.
-- **Place orders** — `POST /orders` creates an order for a customer. It validates that every item in the order actually exists, checks that stock is available, and wraps the whole thing in a database transaction so you never end up with a half-created order.
+- **Place orders** — `POST /orders` creates an order for a customer. It validates that every item in the order actually exists, checks that stock is available, and wraps the whole thing in a database 
+|:) (;lctransaction so you never end up with a half-created order.
 
 There's also a `GET /health` endpoint that just says `"all good"` — because sometimes that's all you need to hear.
 
