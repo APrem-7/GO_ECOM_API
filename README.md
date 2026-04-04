@@ -1,4 +1,4 @@
-t rK0o-,p# GO_ECOM_API
+
 
 A REST API for e-commerce, built with Go. No fluff, no framework magic — just clean layers, typed SQL, and a Postgres database that Docker spins up for you in one command.
 
