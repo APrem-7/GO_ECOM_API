@@ -1,3 +1,34 @@
+# A REST API for E-commerce
+Built with Go. No fluff, no framework magic — just clean layers, typed SQL, and a Postgres database that Docker spins up for you in one command.
+## WHAT IT DOES
+Two core things:
+- **Browse products** — `GET /products` returns every product in the store with name, description, price, and stock quantity.
+- **Place orders** — `POST /orders` creates an order for a customer. It validates that every item exists, checks stock availability, and wraps everything in a database transaction so you never end up with a half-created order.
+There’s also a `GET /health` endpoint that just says "all good" — because sometimes that’s all you need to hear.
+## Why did the Go developer quit their job?
+Because they didn’t get a **CHAN**-ce to do anything interesting.
+## STACK
+- **Go 1.25.5** — Language
+- **chi** — Lightweight HTTP router
+- **PostgreSQL 16** — Database
+- **pgx/v5** — Postgres driver
+- **sqlc** — Type-safe SQL → Go generator
+- **Docker Compose** — Local database setup
+## PROJECT LAYOUT
+```
+cmd/
+  ├─ api.go      → server setup, routes, middleware
+  └─ main.go     → entry point, env + DB config
+total/ 
+internal/
+  ├─ products/   → handler + service for products
+  └─ orders/     → handler + service for orders (transaction + stock check)
+adapters/
+postgres/
+sqlc/   → queries + generated code
+json/       → JSON helpers
+env/        → environment config
+```
 ## Architecture flow:
 HTTP → Handler → Service → Repository → Database
 ## ARCHITECTURE DIAGRAM (MERMAID)
