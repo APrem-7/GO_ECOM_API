@@ -144,6 +144,45 @@ Creates a new order. Validates stock availability and runs everything in a singl
 - `500 Internal Server Error` — something went wrong on our end
 
 ---
+flowchart TD
+
+%% Client Layer
+A[Client / Frontend] -->|HTTP Requests| B[API Server (Chi Router)]
+
+%% Middleware Layer
+B --> C[Middleware Layer]
+C -->|Logging / Recovery / Timeout| D[Handlers]
+
+%% Handler Layer
+D --> E[Product Handler]
+D --> F[Order Handler]
+
+%% Service / Domain Layer
+E --> G[Product Service]
+F --> H[Order Service]
+
+%% Business Logic
+G --> I[Product Domain Logic]
+H --> J[Order Domain Logic]
+
+%% Repository Layer
+I --> K[Repository Layer]
+J --> K
+
+%% SQLC / DB Layer
+K --> L[SQLC Generated Queries]
+
+%% Database
+L --> M[(PostgreSQL Database)]
+
+%% External / Infra
+subgraph Infrastructure
+N[Docker Compose]
+O[Env Config]
+end
+
+N --> B
+O --> B
 
 ## Working with sqlc
 
