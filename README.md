@@ -1,202 +1,88 @@
+# A REST API for E-commerce
 
+Built with Go. No fluff, no framework magic — just clean layers, typed SQL, and a Postgres database that Docker spins up for you in one command.
 
-A REST API for e-commerce, built with Go. No fluff, no framework magic — just clean layers, typed SQL, and a Postgres database that Docker spins up for you in one command.
-
----
-
-## What it does
-
+## WHAT IT DOES
 Two core things:
 
 - **Browse products** — `GET /products` returns every product in the store with name, description, price, and stock quantity.
-- **Place orders** — `POST /orders` creates an order for a customer. It validates that every item in the order actually exists, checks that stock is available, and wraps the whole thing in a database 
-|:) (;lctransaction so you never end up with a half-created order.
+- **Place orders** — `POST /orders` creates an order for a customer. It validates that every item exists, checks stock availability, and wraps everything in a database transaction so you never end up with a half-created order.
 
-There's also a `GET /health` endpoint that just says `"all good"` — because sometimes that's all you need to hear.
+There’s also a `GET /health` endpoint that just says "all good" — because sometimes that’s all you need to hear.
 
-> Why did the Go developer quit their job?  
-> Because they didn't get a CHAN-ce to do anything interesting. 🥁
+## Why did the Go developer quit their job?
+Because they didn’t get a **CHAN**-ce to do anything interesting.
 
----
+## STACK
+- **Go 1.25.5** — Language
+- **chi** — Lightweight HTTP router
+- **PostgreSQL 16** — Database
+- **pgx/v5** — Postgres driver
+- **sqlc** — Type-safe SQL → Go generator
+- **Docker Compose** — Local database setup
 
-## Stack
-
-| Thing | What it is |
-|---|---|
-| [Go 1.25.5](https://go.dev/) | The language |
-| [chi](https://github.com/go-chi/chi) | Lightweight HTTP router — no magic, just middleware and routes |
-| [PostgreSQL 16](https://www.postgresql.org/) | The database |
-| [pgx/v5](https://github.com/jackc/pgx) | Postgres driver — fast and idiomatic |
-| [sqlc](https://sqlc.dev/) | Generates type-safe Go from raw SQL — write SQL, get Go structs |
-| Docker Compose | Spins up the database locally without any setup pain |
-
----
-
-## Project Layout
-
+## PROJECT LAYOUT
 ```
 cmd/
-  api.go      ← server setup, routes, middleware
-  main.go     ← entry point, env + DB config
-
+  ├─ api.go      → server setup, routes, middleware
+  └─ main.go     → entry point, env + DB config
+total/ 
 internal/
-  products/   ← handler + service for listing products
-  orders/     ← handler + service for creating orders (with tx + stock check)
-  adapters/
-    postgres/
-      sqlc/   ← all DB queries and generated code live here
-  json/       ← tiny helpers for reading/writing JSON
-  env/        ← reads env vars with a fallback default
+  ├─ products/   → handler + service for products
+  └─ orders/     → handler + service for orders (transaction + stock check)
+adapters/
+postgres/
+sqlc/   → queries + generated code
+json/       → JSON helpers
+env/        → environment config
 ```
 
-The architecture is intentionally simple: HTTP handler → service → database. No over-engineering.
+## Architecture flow:
+HTTP → Handler → Service → Repository → Database
 
----
-
-## Getting Started
-
-### Prerequisites
-
+## ARCHITECTURE DIAGRAM (MERMAID)
+graph TD;
+A[Client / Frontend] -->|HTTP Requests| B[Chi Router];
+B --> C[Middleware];
+C --> D[Handlers];
+D --> E[Product Handler];
+D --> F[Order Handler];
+E --> G[Product Service];
+F --> H[Order Service];
+G --> I[Product Logic];
+H --> J[Order Logic];
+I --> K[Repository];
+J --> K;
+k --> L[SQLC Queries];
+l --> M[(PostgreSQL)];
+sublgraph Infrastructure;
+n [Docker Compose]; o [Env Config]; end;
+n --> M; o --> B;
+ 
+## GETTING STARTED
+### Prerequisites:
 - Go 1.25+
 - Docker & Docker Compose
-
-### 1. Start the database
-
-```bash
-docker-compose up -d
-```
-
-This starts a Postgres 16 container on `localhost:5432` with:
-
-- **User:** `postgres`  
-- **Password:** `postgres`  
-- **Database:** `ecom`
-
-### 2. Set up your environment
-
-Create a `.env` file in the project root:
-
-```env
-PORT=:8080
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/ecom?sslmode=disable
-```
-
-### 3. Run migrations
-
-Apply the SQL schema from `internal/adapters/postgres/migrations/` to your database. You can use a tool like [`goose`](https://github.com/pressly/goose) or just run the migration files directly against the database.
-
-### 4. Start the server
-
-```bash
-go run cmd/api.go
-```
-
-The server starts on the port defined in your `PORT` env var (default `:8080`).
-
----
-
-## API
-
-### `GET /health`
-Returns `200 OK` with `"all good"`. Use it for health checks or just reassurance.
-
----
-
-### `GET /products`
-Returns a JSON array of all products.
-
-```json
-[
-  {
-    "ID": 1,
-    "Name": "Mechanical Keyboard",
-    "PriceInCenters": 8999,
-    "Description": { "String": "Clicky and satisfying", "Valid": true },
-    "Quantity": 42,
-    "CreatedAt": "...",
-    "UpdatedAt": "..."
-  }
-]
-```
-
-> Note: Prices are stored in **cents** (e.g. `8999` = $89.99).
-
----
-
-### `POST /orders`
-Creates a new order. Validates stock availability and runs everything in a single transaction.
-
-**Request body:**
-```json
-{
-  "customer_id": 7,
-  "items": [
-    { "product_id": 1, "quantity": 2 }
-  ]
-}
-```
-
-**Responses:**
-- `201 Created` — order created, returns the order object
-- `400 Bad Request` — missing customer ID or items
-- `404 Not Found` — a product ID doesn't exist
-- `507 Insufficient Storage` — not enough stock for one of the items
-- `500 Internal Server Error` — something went wrong on our end
-
----
-flowchart TD
-
-%% Client Layer
-A[Client / Frontend] -->|HTTP Requests| B[API Server (Chi Router)]
-
-%% Middleware Layer
-B --> C[Middleware Layer]
-C -->|Logging / Recovery / Timeout| D[Handlers]
-
-%% Handler Layer
-D --> E[Product Handler]
-D --> F[Order Handler]
-
-%% Service / Domain Layer
-E --> G[Product Service]
-F --> H[Order Service]
-
-%% Business Logic
-G --> I[Product Domain Logic]
-H --> J[Order Domain Logic]
-
-%% Repository Layer
-I --> K[Repository Layer]
-J --> K
-
-%% SQLC / DB Layer
-K --> L[SQLC Generated Queries]
-
-%% Database
-L --> M[(PostgreSQL Database)]
-
-%% External / Infra
-subgraph Infrastructure
-N[Docker Compose]
-O[Env Config]
-end
-
-N --> B
-O --> B
-
-## Working with sqlc
-
-SQL queries live in `internal/adapters/postgres/sqlc/queries.sql`. When you add or change a query, regenerate the Go code:
-
-```bash
-sqlc generate
-```
-
-The generated types and functions land in the same `sqlc/` directory. Don't edit the generated files directly — they'll get overwritten.
-
----
-
-## Contributing
-
-Issues and pull requests are welcome. If something's broken or you've got an idea, open an issue and we can talk through it.
-
+### Start database:
+docker-compose up -d  
+pPostgres runs on localhost:5432,
+uUser: postgres,
+pPassword: postgres,
+pDB: ecom.
+### Set environment:
+tCreate .env file:
+pPORT=:8080,
+pDATABASE_URL=postgres://postgres:postgres@localhost:5432/ecom?sslmode=disable;
+'tRun migrations:
+apply SQL files from:
+internal/adapters/postgres/migrations/;
+'tStart server:
+go run cmd/api.go'
+defaults to API endpoints:
+bGET /health - Response: "all good"
+bGET /products - Returns list of products with ID, Name, PriceInCents, Description, Quantity, timestamps (Prices stored in cents; e.g., 8999 = $89.99)
+bPOST /orders - Request includes customer_id and items list; Responses include status codes like 201 (Created), 400 (Bad request), etc.
+'tWorking with SQLC:
+dQueries live in internal/adapters/postgres/sqlc/queries.sql;
+after editing queries, run sqlc generate; do not edit generated files directly.
+'things to contribute are welcome via issues and pull requests.
